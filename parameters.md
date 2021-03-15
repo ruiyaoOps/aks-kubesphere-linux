@@ -23,9 +23,9 @@ parameters
 | ClientNodeNetworkInterfaceName | The name of new or existing client node network interface | ksnode-nic |
 | ClientNodeEnableAcceleratedNetworking | Enable client node network accelerated | false |
 | ClientosDiskType | Client os Disk type | StandardSSD_LRS |
-| adminUsername | Client node admin user name | aksuser |
-| adminPassword | Client node admin user password | ABCabc321 |
-| CloudName | AzureChinaCloud users should change it | AzureGlobalCloud |
+| adminUsername | Client node admin user name | null |
+| adminPassword | Client node admin user password | null |
+| CloudName | AzureChinaCloud users should change it | AzureCloud |
 | SPName | Service Principal User Name | null |
 | SPPassword | Service Principal User Password | null |
 | SPTenant | Service Principal User Tenant | null |

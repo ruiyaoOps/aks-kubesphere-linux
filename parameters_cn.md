@@ -23,9 +23,9 @@
 | ClientNodeNetworkInterfaceName | 客户端网络接口名称 | ksnode-nic |
 | ClientNodeEnableAcceleratedNetworking | 启用客户端节点网络加速 | false |
 | ClientosDiskType | 客户端磁盘类型 | StandardSSD_LRS |
-| adminUsername | 客户端管理员用户名 | aksuser |
-| adminPassword | 客户端管理员用户密码 | ABCabc321 |
-| CloudName | 该参数只对 Azure 中国区用户有效，中国区用户需将值改为"AzureChinaCloud" | AzureGlobalCloud |
+| adminUsername | 客户端管理员用户名 | null |
+| adminPassword | 客户端管理员用户密码 | null |
+| CloudName | 该参数只对 Azure 中国区用户有效，中国区用户需将值改为"AzureChinaCloud" | AzureCloud |
 | SPName | 服务主体名称 | null |
 | SPPassword | 服务主体密码 | null |
 | SPTenant | 服务主体 tenant | null |

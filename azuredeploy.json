@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.1",
     "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the resources should be deployed."
+            }
+        },
         "NetworkSecurityGroupName": {
             "type": "string",
             "defaultValue": "KubeSphereRG-NSG",
@@ -14,6 +21,18 @@
             "defaultValue": "KubeSphereRG-vnet",
             "metadata": {
                 "description": "Name of new or existing virtual network"
+            }
+        },
+        "subnetCount": {
+            "type": "int",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "ddosProtectionPlanEnabled": {
+            "type": "bool",
+            "metadata": {
+                "description": "description"
             }
         },
         "addressSpaces": {
@@ -114,7 +133,7 @@
                 "1.19.6",
                 "1.19.7"
             ],
-            "defaultValue": "1.18.14",
+            "defaultValue": "1.19.7",
             "metadata": {
                 "description": "The version of Kubernetes."
             }
@@ -187,37 +206,35 @@
         },
         "adminUsername": {
             "type": "string",
-            "defaultValue": "aksuser",
             "metadata": {
-                "description": "Client node admin user name."
+                "description": "Name of client node admin."
             }
         },
         "adminPassword": {
-            "type": "string",
-            "defaultValue": "ABCabc321",
+            "type": "securestring",
             "metadata": {
-                "description": "Client node admin user password."
+                "description": "Password for client node admin."
             }
         },
         "CloudName": {
             "type": "string",
-            "defaultValue": "AzureGlobalCloud",
+            "defaultValue": "AzureCloud",
             "allowedValues": [
                 "AzureChinaCloud",
-                "AzureGlobalCloud"
+                "AzureCloud"
             ],
             "metadata": {
-                "description": "AzureChinaCloud users should change it."
+                "description": "Use AzureChinaCloud will set az Cloud to AzureChinaCloud,only china users should change this to AzureChinaCloud."
             }
         },
         "SPName": {
             "type": "string",
             "metadata": {
-                "description": "Service Principal User Name."
+                "description": "Service Principal User Name,It works for deployment Kubesphere on AKS."
             }
         },
         "SPPassword": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "Service Principal User Password."
             }
@@ -229,9 +246,9 @@
             }
         },
         "SubscriptionID": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
-                "description": "SubscriptionID."
+                "description": "Subscription ID."
             }
         },
         "_artifactsLocation": {
@@ -265,15 +282,14 @@
         "ClientsubnetRefID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('ClientSubnetName'))]",
         "ClientPublicIpAddressName": "ClientNode-PIP",
         "ClientPublicIpAddressType": "Dynamic",
-        "ClientPublicIpAddressSku": "Basic",
-        "location": "[resourceGroup().location]"
+        "ClientPublicIpAddressSku": "Basic"
     },
     "resources": [
         {
             "name": "[parameters('virtualNetworkName')]",
             "type": "Microsoft.Network/VirtualNetworks",
             "apiVersion": "2019-04-01",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('NetworkSecurityGroupName'))]"
             ],
@@ -286,10 +302,10 @@
                     {
                         "name": "[parameters('AKSSubnetName')]",
                         "properties": {
-                            "addressPrefix" : "[parameters('AKSSubnetAddressRange')]",
+                            "addressPrefix": "[parameters('AKSSubnetAddressRange')]",
                             "networkSecurityGroup": {
-								"id": "[variables('networkSecurityGroupID')]"
-							}
+                                "id": "[variables('networkSecurityGroupID')]"
+                            }
                         }
                     },
                     {
@@ -297,74 +313,74 @@
                         "properties": {
                             "addressPrefix": "[parameters('ClientSubnetAddressRange')]",
                             "networkSecurityGroup": {
-								"id": "[variables('networkSecurityGroupID')]"
-							}
+                                "id": "[variables('networkSecurityGroupID')]"
+                            }
                         }
                     }
                 ],
                 "enableDdosProtection": "[variables('ddosProtectionPlanEnabled')]"
             }
         },
-		{
-			"apiVersion": "2019-09-01",
-			"type": "Microsoft.Network/networkSecurityGroups",
-			"name": "[parameters('NetworkSecurityGroupName')]",
-			"location": "[variables('location')]",
-			"tags": {},
-			"properties": {
-				"securityRules": [
-					{
-						"name": "allowSSHin_all",
-						"properties": {
-							"description": "Allow SSH in from all locations",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "22",
-							"sourceAddressPrefix": "*",
-							"destinationAddressPrefix": "*",
-							"access": "Allow",
-							"priority": 100,
-							"direction": "Inbound"
-						}
-					},
-					{
-						"name": "allowKSConsolein_all",
-						"properties": {
-							"description": "Allow KS Console in from all locations",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "30880",
-							"sourceAddressPrefix": "*",
-							"destinationAddressPrefix": "*",
-							"access": "Allow",
-							"priority": 210,
-							"direction": "Inbound"
-						}
-					}
-				]
-			}
-		},
-		{
-			"name": "AKSDeployment",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-			],
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('AKSDeploymentTemplateUrl')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
-					"AKSresourceName": {
+        {
+            "apiVersion": "2019-09-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('NetworkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "allowSSHin_all",
+                        "properties": {
+                            "description": "Allow SSH in from all locations",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allowKSConsolein_all",
+                        "properties": {
+                            "description": "Allow KS Console in from all locations",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30880",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 210,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AKSDeployment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('AKSDeploymentTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "AKSresourceName": {
                         "value": "[parameters('AKSresourceName')]"
                     },
-					"location": {
-                        "value": "[variables('location')]"
+                    "location": {
+                        "value": "[parameters('location')]"
                     },
-					"dnsPrefix": {
+                    "dnsPrefix": {
                         "value": "[parameters('dnsPrefix')]"
                     },
                     "serviceCidr": {
@@ -379,128 +395,128 @@
                     "vmSize": {
                         "value": "[parameters('vmSize')]"
                     },
-					"osDiskSizeGB": {
+                    "osDiskSizeGB": {
                         "value": "[variables('osDiskSizeGB')]"
                     },
-					"kubernetesVersion": {
+                    "kubernetesVersion": {
                         "value": "[parameters('kubernetesVersion')]"
                     },
-					"MasterNodeCount": {
+                    "MasterNodeCount": {
                         "value": "[parameters('MasterNodeCount')]"
                     },
-					"WorkerNodeCount": {
+                    "WorkerNodeCount": {
                         "value": "[parameters('WorkerNodeCount')]"
                     },
-					"networkPlugin": {
+                    "networkPlugin": {
                         "value": "[variables('networkPlugin')]"
                     },
                     "vnetSubnetID": {
                         "value": "[variables('AKSsubnetRefID')]"
                     },
-					"vmssNodePool": {
+                    "vmssNodePool": {
                         "value": "[variables('vmssNodePool')]"
                     },
-					"enablePrivateCluster": {
+                    "enablePrivateCluster": {
                         "value": "[parameters('enablePrivateCluster')]"
                     },
-					"networkPolicy": {
+                    "networkPolicy": {
                         "value": "[variables('networkPolicy')]"
                     }
-				}
-			}
-		},
+                }
+            }
+        },
         {
-			"name": "CreateClientNode",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
-			"dependsOn": [
-				"AKSDeployment"
-			],
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('ClientNodeDeploymentTemplateUrl')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
-					"location": {
-                        "value": "[variables('location')]"
+            "name": "CreateClientNode",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "dependsOn": [
+                "AKSDeployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ClientNodeDeploymentTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
                     },
-					"ClientNodeNetworkInterfaceName": {
+                    "ClientNodeNetworkInterfaceName": {
                         "value": "[parameters('ClientNodeNetworkInterfaceName')]"
                     },
-					"enableAcceleratedNetworking": {
+                    "enableAcceleratedNetworking": {
                         "value": "[parameters('ClientNodeEnableAcceleratedNetworking')]"
                     },
-					"networkSecurityGroupID": {
+                    "networkSecurityGroupID": {
                         "value": "[variables('networkSecurityGroupID')]"
                     },
-					"subnetName": {
+                    "subnetName": {
                         "value": "[parameters('ClientSubnetName')]"
                     },
                     "clientsubnetid": {
                         "value": "[variables('ClientsubnetRefID')]"
                     },
-					"virtualNetworkId": {
+                    "virtualNetworkId": {
                         "value": "[variables('virtualNetworkId')]"
                     },
-					"publicIpAddressName": {
+                    "publicIpAddressName": {
                         "value": "[variables('ClientPublicIpAddressName')]"
                     },
-					"publicIpAddressType": {
+                    "publicIpAddressType": {
                         "value": "[variables('ClientPublicIpAddressType')]"
                     },
-					"publicIpAddressSku": {
+                    "publicIpAddressSku": {
                         "value": "[variables('ClientPublicIpAddressSku')]"
                     },
-					"virtualMachineName": {
+                    "virtualMachineName": {
                         "value": "[parameters('ClientResourceName')]"
                     },
-					"virtualMachineComputerName": {
+                    "virtualMachineComputerName": {
                         "value": "[parameters('ClientResourceName')]"
                     },
-					"osDiskType": {
+                    "osDiskType": {
                         "value": "[parameters('ClientosDiskType')]"
                     },
-					"virtualMachineSize": {
+                    "virtualMachineSize": {
                         "value": "[parameters('vmSize')]"
                     },
-					"adminUsername": {
+                    "adminUsername": {
                         "value": "[parameters('adminUsername')]"
                     },
-					"adminPassword":{
+                    "adminPassword": {
                         "value": "[parameters('adminPassword')]"
                     },
-					"CloudName": {
+                    "CloudName": {
                         "value": "[parameters('CloudName')]"
                     },
-					"SPName": {
+                    "SPName": {
                         "value": "[parameters('SPName')]"
                     },
-					"SPPassword": {
+                    "SPPassword": {
                         "value": "[parameters('SPPassword')]"
                     },
-					"SPTenant": {
+                    "SPTenant": {
                         "value": "[parameters('SPTenant')]"
                     },
-					"SubscriptionID": {
+                    "SubscriptionID": {
                         "value": "[parameters('SubscriptionID')]"
                     },
-					"ResourceGroup": {
+                    "ResourceGroup": {
                         "value": "[resourceGroup().name]"
                     },
                     "AKSresourceName": {
                         "value": "[parameters('AKSresourceName')]"
                     },
-					"KubeSphereInstallScriptUrl": {
+                    "KubeSphereInstallScriptUrl": {
                         "value": "[variables('KubeSphereInstallScriptUrl')]"
                     },
-					"KubeSphereInstallScriptFileName": {
+                    "KubeSphereInstallScriptFileName": {
                         "value": "[variables('KubeSphereInstallScriptFileName')]"
                     }
-				}
-			}
-		}
+                }
+            }
+        }
     ],
     "outputs": {}
 }

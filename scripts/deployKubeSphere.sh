@@ -85,20 +85,7 @@ echo $(date) " - Login Azure complete"
 # deploy KubeSphere
 ## Download kubectl
 echo $(date) " - Deploy KubeSphere"
-if [[ "$CloudName" == "AzureChinaCloud" ]];then
-    sudo sh -c 'echo -e "[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
-enabled=1
-gpgcheck=0" > /etc/yum.repos.d/kubernetes.repo'
-
-    sudo yum makecache
-    sudo yum install -y kubectl
-else
-    sudo curl -LO https://dl.k8s.io/release/$kubernetesVersion/bin/linux/amd64/kubectl
-    sudo chmod a+x kubectl
-    sudo mv kubectl /usr/local/bin/
-fi
+az aks install-cli
 
 ## deploy KubeSphere
 cat >/tmp/kubesphere-installer.yaml<<EOF
