@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "NetworkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "KubeSphereRG-NSG",
+      "metadata": {
+        "description": "Name of new or existing network security group"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "KubeSphereRG-vnet",
+      "metadata": {
+        "description": "descrName of new or existing virtual network | ubeSphereRG-vnetiption"
+      }
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -10,7 +24,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "sshPublicKey",
+      "defaultValue": "password",
       "allowedValues": [
         "password",
         "sshPublicKey"
@@ -150,7 +164,7 @@
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "nicName": "[concat('nic', variables('vmName'))]",
-    "networkSecurityGroupName": "[concat('nsg', variables('vmName'))]",
+    "networkSecurityGroupName": "[parameters('NetworkSecurityGroupName')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -163,8 +177,8 @@
     "vmssNodePool": true,
     "networkPolicy": "azure",
     "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
-    "vmName": "[concat('vm',uniquestring(resourceGroup().id))]",
-    "virtualNetworkName": "vnet",
+    "vmName": "[concat('clientnode',uniquestring(resourceGroup().id))]",
+    "virtualNetworkName": "[parameters('virtualNetworkName')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deployaks.json', parameters('_artifactsLocationSasToken')))]",
     "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'),concat('scripts/deployKubeSphere.sh',parameters('_artifactsLocationSasToken')))]",
