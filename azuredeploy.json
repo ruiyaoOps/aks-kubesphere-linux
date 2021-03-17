@@ -8,11 +8,29 @@
         "description": "Username for the Virtual Machine."
       }
     },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Authentication type"
+      }
+    },
     "adminPassword": {
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "Password for the Virtual Machine."
+      }
+    },
+    "sshPublicKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "ssh key for the Virtual Machine."
       }
     },
     "vmSize": {
@@ -151,6 +169,17 @@
     "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deployaks.json', parameters('_artifactsLocationSasToken')))]",
     "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'),concat('scripts/deployKubeSphere.sh',parameters('_artifactsLocationSasToken')))]",
     "KubeSphereInstallScriptFileName": "deployKubeSphere.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('sshPublicKey')]"
+          }
+        ]
+      }
+    },
     "contributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]"
   },
   "resources": [
@@ -307,7 +336,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
