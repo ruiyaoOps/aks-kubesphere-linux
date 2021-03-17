@@ -3,16 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
-            "value": ""
+            "value": "" // TODO: Fill in parameter value
         },
         "adminPassword": {
             "value": ""
         },
         "vmSize": {
             "value": "Standard_D2_V3"
-        },
-        "desktopInstall": {
-            "value": false
         },
         "CloudName": {
             "value": "AzureCloud"
@@ -39,13 +36,13 @@
             "value": false
         },
         "_artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/ruiyaoOps/testamin/master/"
+            "value": "https://raw.githubusercontent.com/ruiyaoOps/aks-kubesphere-linux/master/"
         },
         "_artifactsLocationSasToken": {
             "value": ""
         },
         "location": {
-            "value": ""
+            "value": "" // TODO: Fill in parameter value
         }
     }
 }
