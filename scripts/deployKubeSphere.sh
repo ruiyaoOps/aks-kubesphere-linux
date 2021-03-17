@@ -2,68 +2,43 @@
 echo $(date) " - ############## Starting Script ####################"
 
 export CloudName=$1
-export SPName=$2
-export SPPasswoed=$3
-export SPTenant=$4
-export SubscriptionID=$5
-export ResourceGroup=$6
-export resourceName=$7
+export SubscriptionID=$2
+export ResourceGroup=$3
+export resourceName=$4
 
-
-# install Azure-cli
 echo $(date) " - Install Azure-cli"
-sudo yum install gcc gcc-c++ make ncurses patch wget tar zlib zlib-devel openssl-devel -y
-## build openssl from source
-echo $(date) " - build openssl from source"
-SRC_DIR=$(mktemp -d)
-cd $SRC_DIR
-wget https://www.openssl.org/source/openssl-1.1.1d.tar.gz
-tar -xzf openssl-1.1.1d.tar.gz
-cd openssl-1.1.1d
-./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl
-make
-sudo make install
-## configure shared object lookup directory so that libssl.so.1.1 can be found
-echo "/usr/local/ssl/lib" | sudo tee /etc/ld.so.conf.d/openssl-1.1.1d.conf
-## reload config
-sudo ldconfig -v
 
-## build Python 3 from source
-echo $(date) " - build Python 3 from source"
-PYTHON_VERSION="3.6.9"
-PYTHON_SRC_DIR=$(mktemp -d)
-cd $PYTHON_SRC_DIR
-wget -qO- https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz | tar -xz -C "$PYTHON_SRC_DIR"
-cd $PYTHON_SRC_DIR/Python-$PYTHON_VERSION
-sed -i '205s/#//' Modules/Setup
-sed -i '209s/#//' Modules/Setup
-sed -i '210s/#//' Modules/Setup
-sed -i '211s/#//' Modules/Setup
-sed -i '212s/#//' Modules/Setup
-sed -i '205s/#//' Modules/Setup.dist
-sed -i '209s/#//' Modules/Setup.dist
-sed -i '210s/#//' Modules/Setup.dist
-sed -i '211s/#//' Modules/Setup.dist
-sed -i '212s/#//' Modules/Setup.dist
-./configure --prefix=/usr --with-openssl=/usr/local/ssl
-make
-sudo make install
+apt-get update
 
-# add azure-cli repo
-sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-sudo sh -c 'echo -e "[azure-cli]
-name=Azure CLI
-baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.1/terraform_0.11.1_linux_amd64.zip?_ga=2.228206621.1801000149.1512425211-1345627201.1504718143
+sudo apt-get install -y jq
+
+sudo apt-get install unzip
+
+unzip terraform.zip
 
 
+TF_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M ".current_version")
+wget -O terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+wget -O terraform.sha256 https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS
+wget -O terraform.sha256.sig https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS.sig
+curl -s https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
+gpg --verify terraform.sha256.sig terraform.sha256
+echo $(grep -Po "[[:xdigit:]]{64}(?=\s+terraform_${TF_VERSION}_linux_amd64.zip)" terraform.sha256) terraform.zip | sha256sum -c
+unzip terraform.zip
+mv terraform /usr/local/bin
+rm -f terraform terraform.zip terraform.sha256 terraform.sha256.sig
+unset TF_VERSION
 
-# download and install azure-cli
-sudo yum install yum-utils -y
-sudo yumdownloader azure-cli
-sudo rpm -ivh --nodeps azure-cli-*.rpm
+
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+
+sudo curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+
+sudo apt-get install apt-transport-https
+
+sudo apt-get update && sudo apt-get install azure-cli
+
 echo $(date) " - Install Azure-cli Complete"
 
 # login Azure
@@ -71,7 +46,7 @@ echo $(date) " - Login Azure"
 if [[ "$CloudName" == AzureChinaCloud ]];then
     az cloud set -n AzureChinaCloud
 fi
-az login --service-principal -u "$SPName" --p "$SPPasswoed" --tenant "$SPTenant"
+az login --identity
 if [ $? -eq 0 ];then
     echo "azure cloud login succeed"
 else
