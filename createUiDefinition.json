@@ -3,10 +3,364 @@
     "handler": "Microsoft.Azure.CreateUIDef",
     "version": "0.1.2-preview",
     "parameters": {
-         "basics": [{}],
-         "steps": [ 
-             {}
-         ],
-         "outputs": {}
-     }
-   }
+        "resourceTypes": [
+            "microsoft.resources/resourcegroups"
+        ],
+        "basics": [
+            {
+                "name": "location",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Location",
+                "defaultValue": "[[resourceGroup().location]",
+                "toolTip": "Location for all resources.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "CloudName",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Cloud Name",
+                "defaultValue": "AzureCloud",
+                "toolTip": "Use AzureChinaCloud will set az Cloud to AzureChinaCloud,only china users should change this to AzureChinaCloud.",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "AzureChinaCloud",
+                            "value": "AzureChinaCloud"
+                        },
+                        {
+                            "label": "AzureCloud",
+                            "value": "AzureCloud"
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "AKSresourceName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "AK Sresource Name",
+                "defaultValue": "AKS-KubeSphere",
+                "toolTip": "The name of AKS resource",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "dnsPrefix",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Dns Prefix",
+                "defaultValue": "AKS-KubeSphere-dns",
+                "toolTip": "Optional DNS prefix to use with hosted Kubernetes API server FQDN.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "osDiskSizeGB",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Os Disk Size GB",
+                "defaultValue": "0",
+                "toolTip": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "kubernetesVersion",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Kubernetes Version",
+                "defaultValue": "1.19.7",
+                "toolTip": "The version of Kubernetes.",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "1.17.13",
+                            "value": "1.17.13"
+                        },
+                        {
+                            "label": "1.17.16",
+                            "value": "1.17.16"
+                        },
+                        {
+                            "label": "1.18.10",
+                            "value": "1.18.10"
+                        },
+                        {
+                            "label": "1.18.14",
+                            "value": "1.18.14"
+                        },
+                        {
+                            "label": "1.19.6",
+                            "value": "1.19.6"
+                        },
+                        {
+                            "label": "1.19.7",
+                            "value": "1.19.7"
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "AKSvmSize",
+                "type": "Microsoft.Common.TextBox",
+                "label": "AK Svm Size",
+                "defaultValue": "Standard_F8s_v2",
+                "toolTip": "The size of the AKS VM to create",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "MasterNodeCount",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Master Node Count",
+                "defaultValue": "3",
+                "toolTip": "The number of Master node.",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "1",
+                            "value": "1"
+                        },
+                        {
+                            "label": "3",
+                            "value": "3"
+                        },
+                        {
+                            "label": "5",
+                            "value": "5"
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "WorkerNodeCount",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Worker Node Count",
+                "defaultValue": "3",
+                "toolTip": "The number of Worker node.",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "1",
+                            "value": "1"
+                        },
+                        {
+                            "label": "2",
+                            "value": "2"
+                        },
+                        {
+                            "label": "3",
+                            "value": "3"
+                        },
+                        {
+                            "label": "4",
+                            "value": "4"
+                        },
+                        {
+                            "label": "5",
+                            "value": "5"
+                        },
+                        {
+                            "label": "6",
+                            "value": "6"
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "enablePrivateCluster",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Enable Private Cluster",
+                "defaultValue": "false",
+                "toolTip": "Enable private network access to the kubernetes cluster.",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "true",
+                            "value": true
+                        },
+                        {
+                            "label": "false",
+                            "value": false
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "vmName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Vm Name",
+                "defaultValue": "KS-client",
+                "toolTip": "Name of Virtual Machine.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "adminUsername",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Admin Username",
+                "defaultValue": "",
+                "toolTip": "Username for the Virtual Machine.",
+                "constraints": {
+                    "required": true,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "authenticationType",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Authentication Type",
+                "defaultValue": "password",
+                "toolTip": "Authentication type",
+                "constraints": {
+                    "required": false,
+                    "allowedValues": [
+                        {
+                            "label": "password",
+                            "value": "password"
+                        },
+                        {
+                            "label": "sshPublicKey",
+                            "value": "sshPublicKey"
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "adminPassword",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "Admin Password",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "Password for the Virtual Machine.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "options": {
+                    "hideConfirmation": true
+                },
+                "visible": true
+            },
+            {
+                "name": "sshPublicKey",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "Ssh Public Key",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "ssh key for the Virtual Machine.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "options": {
+                    "hideConfirmation": true
+                },
+                "visible": true
+            },
+            {
+                "name": "vmSize",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Vm Size",
+                "defaultValue": "Standard_D2_V3",
+                "toolTip": "The size of the VM to create",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "_artifactsLocation",
+                "type": "Microsoft.Common.TextBox",
+                "label": "_artifacts Location",
+                "defaultValue": "https://raw.githubusercontent.com/ruiyaoOps/aks-kubesphere-linux/master/",
+                "toolTip": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "visible": true
+            },
+            {
+                "name": "_artifactsLocationSasToken",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "_artifacts Location Sas Token",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.",
+                "constraints": {
+                    "required": false,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "options": {
+                    "hideConfirmation": true
+                },
+                "visible": true
+            }
+        ],
+        "steps": [],
+        "outputs": {
+            "location": "[basics('location')]",
+            "CloudName": "[basics('CloudName')]",
+            "AKSresourceName": "[basics('AKSresourceName')]",
+            "dnsPrefix": "[basics('dnsPrefix')]",
+            "osDiskSizeGB": "[basics('osDiskSizeGB')]",
+            "kubernetesVersion": "[basics('kubernetesVersion')]",
+            "AKSvmSize": "[basics('AKSvmSize')]",
+            "MasterNodeCount": "[basics('MasterNodeCount')]",
+            "WorkerNodeCount": "[basics('WorkerNodeCount')]",
+            "enablePrivateCluster": "[basics('enablePrivateCluster')]",
+            "vmName": "[basics('vmName')]",
+            "adminUsername": "[basics('adminUsername')]",
+            "authenticationType": "[basics('authenticationType')]",
+            "adminPassword": "[basics('adminPassword')]",
+            "sshPublicKey": "[basics('sshPublicKey')]",
+            "vmSize": "[basics('vmSize')]",
+            "_artifactsLocation": "[basics('_artifactsLocation')]",
+            "_artifactsLocationSasToken": "[basics('_artifactsLocationSasToken')]"
+        }
+    }
+}

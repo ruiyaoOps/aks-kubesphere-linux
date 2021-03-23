@@ -11,6 +11,9 @@
         "AKSresourceName": {
             "value": "AKS-KubeSphere"
         },
+        "osDiskSizeGB": {
+            "value": 0
+        },
         "kubernetesVersion": {
             "value": "1.19.7"
         },
@@ -23,9 +26,6 @@
         "WorkerNodeCount": {
             "value": 3
         },
-        "AKSosDiskSizeGB": {
-            "value": 0
-        },
         "vmName": {
             "value": "KS-client"
         },
@@ -33,7 +33,7 @@
             "value": ""
         },
         "authenticationType": {
-            "value": "password"
+            "value": "sshPublicKey"
         },
         "adminPassword": {
             "value": ""
