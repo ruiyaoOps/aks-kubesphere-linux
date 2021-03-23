@@ -2,14 +2,8 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "adminUsername": {
+        "location": {
             "value": ""
-        },
-        "adminPassword": {
-            "value": ""
-        },
-        "vmSize": {
-            "value": "Standard_D2_V3"
         },
         "CloudName": {
             "value": "AzureCloud"
@@ -17,14 +11,11 @@
         "AKSresourceName": {
             "value": "AKS-KubeSphere"
         },
-        "dnsPrefix": {
-            "value": "AKS-KubeSphere-dns"
-        },
-        "osDiskSizeGB": {
-            "value": 0
-        },
         "kubernetesVersion": {
             "value": "1.19.7"
+        },
+        "AKSvmSize": {
+            "value": "Standard_D2_V3"
         },
         "MasterNodeCount": {
             "value": 3
@@ -32,16 +23,31 @@
         "WorkerNodeCount": {
             "value": 3
         },
-        "enablePrivateCluster": {
-            "value": false
+        "AKSosDiskSizeGB": {
+            "value": 0
+        },
+        "vmName": {
+            "value": "KS-client"
+        },
+        "adminUsername": {
+            "value": ""
+        },
+        "authenticationType": {
+            "value": "password"
+        },
+        "adminPassword": {
+            "value": ""
+        },
+        "sshPublicKey": {
+            "value": ""
+        },
+        "vmSize": {
+            "value": "Standard_D2_V3"
         },
         "_artifactsLocation": {
             "value": "https://raw.githubusercontent.com/ruiyaoOps/aks-kubesphere-linux/master/"
         },
         "_artifactsLocationSasToken": {
-            "value": ""
-        },
-        "location": {
             "value": ""
         }
     }

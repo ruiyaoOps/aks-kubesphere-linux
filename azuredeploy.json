@@ -2,18 +2,94 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "NetworkSecurityGroupName": {
+    "location": {
       "type": "string",
-      "defaultValue": "KubeSphereRG-NSG",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Name of new or existing network security group"
+        "description": "Location for all resources."
       }
     },
-    "virtualNetworkName": {
+    "CloudName": {
+        "type": "string",
+        "defaultValue": "AzureCloud",
+        "allowedValues": [
+            "AzureChinaCloud",
+            "AzureCloud"
+        ],
+        "metadata": {
+            "description": "Use AzureChinaCloud will set az Cloud to AzureChinaCloud,only china users should change this to AzureChinaCloud."
+        }
+    },
+    "AKSresourceName": {
+        "type": "string",
+        "defaultValue": "AKS-KubeSphere",
+        "metadata": {
+            "description": "The name of AKS resource"
+        }
+    },
+    "kubernetesVersion": {
+        "type": "string",
+        "allowedValues": [
+            "1.17.13",
+            "1.17.16",
+            "1.18.10",
+            "1.18.14",
+            "1.19.6",
+            "1.19.7"
+        ],
+        "defaultValue": "1.19.7",
+        "metadata": {
+            "description": "The version of Kubernetes."
+        }
+    },
+    "AKSvmSize": {
       "type": "string",
-      "defaultValue": "KubeSphereRG-vnet",
       "metadata": {
-        "description": "descrName of new or existing virtual network | ubeSphereRG-vnetiption"
+        "description": "The size of the AKS VM to create"
+      },
+      "defaultValue": "Standard_D2_V3"
+    },
+    "MasterNodeCount": {
+        "type": "int",
+        "defaultValue": 3,
+        "allowedValues": [
+            1,
+            3,
+            5
+        ],
+        "metadata": {
+            "description": "The number of Master node."
+        }
+    },
+    "WorkerNodeCount": {
+        "type": "int",
+        "defaultValue": 3,
+        "allowedValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "metadata": {
+            "description": "The number of Worker node."
+        }
+    },
+    "AKSosDiskSizeGB": {
+        "type": "int",
+        "defaultValue": 0,
+        "metadata": {
+            "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+        },
+        "minValue": 0,
+        "maxValue": 1023
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "KS-client",
+      "metadata": {
+        "description": "Name of Virtual Machine."
       }
     },
     "adminUsername": {
@@ -50,92 +126,9 @@
     "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "The size of the VM to create"
+        "description": "The size of the AKS VM to create"
       },
       "defaultValue": "Standard_D2_V3"
-    },
-    "CloudName": {
-        "type": "string",
-        "defaultValue": "AzureCloud",
-        "allowedValues": [
-            "AzureChinaCloud",
-            "AzureCloud"
-        ],
-        "metadata": {
-            "description": "Use AzureChinaCloud will set az Cloud to AzureChinaCloud,only china users should change this to AzureChinaCloud."
-        }
-    },
-    "AKSresourceName": {
-        "type": "string",
-        "defaultValue": "AKS-KubeSphere",
-        "metadata": {
-            "description": "The name of AKS resource"
-        }
-    },
-    "dnsPrefix": {
-        "type": "string",
-        "defaultValue": "AKS-KubeSphere-dns",
-        "metadata": {
-            "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
-        }
-    },
-    "osDiskSizeGB": {
-        "type": "int",
-        "defaultValue": 0,
-        "metadata": {
-            "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
-        },
-        "minValue": 0,
-        "maxValue": 1023
-    },
-    "kubernetesVersion": {
-        "type": "string",
-        "allowedValues": [
-            "1.17.13",
-            "1.17.16",
-            "1.18.10",
-            "1.18.14",
-            "1.19.6",
-            "1.19.7"
-        ],
-        "defaultValue": "1.19.7",
-        "metadata": {
-            "description": "The version of Kubernetes."
-        }
-    },
-    "MasterNodeCount": {
-        "type": "int",
-        "defaultValue": 3,
-        "allowedValues": [
-            1,
-            3,
-            5
-        ],
-        "metadata": {
-            "description": "The number of Master node."
-        }
-    },
-    "WorkerNodeCount": {
-        "type": "int",
-        "defaultValue": 3,
-        "allowedValues": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6
-        ],
-        "metadata": {
-            "description": "The number of Worker node."
-        }
-    },
-    "enablePrivateCluster": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-            "description": "Enable private network access to the kubernetes cluster."
-        }
     },
     "_artifactsLocation": {
       "type": "string",
@@ -150,21 +143,14 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
     }
   },
   "variables": {
     "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id))]",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
-    "nicName": "[concat('nic', variables('vmName'))]",
-    "networkSecurityGroupName": "[parameters('NetworkSecurityGroupName')]",
+    "nicName": "[concat('nic', parameters('vmName'))]",
+    "networkSecurityGroupName": "[concat('nsg', parameters('vmName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -173,16 +159,17 @@
     "AKSServiceAddressRange": "10.10.0.0/16",
     "AKSdnsServiceIP": "10.10.0.10",
     "dockerBridgeCidr": "172.17.0.1/16",
+    "dnsPrefix": "AKS-KubeSphere-dns",
     "networkPlugin": "azure",
     "vmssNodePool": true,
     "networkPolicy": "azure",
+    "enablePrivateCluster": false,
     "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
-    "vmName": "[concat('clientnode',uniquestring(resourceGroup().id))]",
-    "virtualNetworkName": "[parameters('virtualNetworkName')]",
+    "virtualNetworkName": "vnet",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deployaks.json', parameters('_artifactsLocationSasToken')))]",
-    "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'),concat('scripts/deployKubeSphere.sh',parameters('_artifactsLocationSasToken')))]",
-    "KubeSphereInstallScriptFileName": "deployKubeSphere.sh",
+    "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/aks.json', parameters('_artifactsLocationSasToken')))]",
+    "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'),concat('scripts/deploykubesphere.sh',parameters('_artifactsLocationSasToken')))]",
+    "KubeSphereInstallScriptFileName": "deploykubesphere.sh",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -335,7 +322,7 @@
     {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
           "[resourceId('Microsoft.Network/networkinterfaces', variables('nicName'))]"
@@ -348,7 +335,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
@@ -381,11 +368,11 @@
       "name": "[guid(resourceGroup().id, variables('contributor'))]",
       "type": "Microsoft.Authorization/roleAssignments",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ],
       "properties": {
         "roleDefinitionId": "[variables('contributor')]",
-        "principalId": "[reference(variables('vmName'), '2020-12-01', 'Full').identity.principalId]",
+        "principalId": "[reference(parameters('vmName'), '2020-12-01', 'Full').identity.principalId]",
         "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]",
         "principalType": "ServicePrincipal"
       }
@@ -412,7 +399,7 @@
                     "value": "[parameters('location')]"
                 },
                 "dnsPrefix": {
-                    "value": "[parameters('dnsPrefix')]"
+                    "value": "[variables('dnsPrefix')]"
                 },
                 "serviceCidr": {
                     "value": "[variables('AKSServiceAddressRange')]"
@@ -424,10 +411,10 @@
                     "value": "[variables('dockerBridgeCidr')]"
                 },
                 "vmSize": {
-                    "value": "[parameters('vmSize')]"
+                    "value": "[parameters('AKSvmSize')]"
                 },
                 "osDiskSizeGB": {
-                    "value": "[parameters('osDiskSizeGB')]"
+                    "value": "[parameters('AKSosDiskSizeGB')]"
                 },
                 "kubernetesVersion": {
                     "value": "[parameters('kubernetesVersion')]"
@@ -448,7 +435,7 @@
                     "value": "[variables('vmssNodePool')]"
                 },
                 "enablePrivateCluster": {
-                    "value": "[parameters('enablePrivateCluster')]"
+                    "value": "[variables('enablePrivateCluster')]"
                 },
                 "networkPolicy": {
                     "value": "[variables('networkPolicy')]"
@@ -458,11 +445,11 @@
     },
     {
         "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(variables('vmName'),'/deploykubesphere')]",
+        "name": "[concat(parameters('vmName'),'/deploykubesphere')]",
         "apiVersion": "2020-06-01",
         "location": "[parameters('location')]",
         "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
             "[resourceId('Microsoft.Resources/deployments', 'AKSDeployment')]"
         ],
         "properties": {
