@@ -11,6 +11,7 @@
         },
         "location": {
             "type": "string",
+            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "The location of the Managed Cluster resource."
             }
@@ -83,7 +84,6 @@
         },
         "nodeResourceGroup": {
             "type": "string",
-            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Name of the resource group containing agent pool nodes."
             }
@@ -182,9 +182,9 @@
                     "azurePolicy": {
                         "enabled": "[parameters('enableAzurePolicy')]"
                     }
-                }
+                },
+                "nodeResourceGroup": "[parameters('nodeResourceGroup')]"
             },
-            "nodeResourceGroup": "[parameters('nodeResourceGroup')]",
             "tags": {},
             "identity": {
                 "type": "SystemAssigned"
