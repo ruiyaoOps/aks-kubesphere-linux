@@ -179,7 +179,7 @@
     "networkPolicy": "azure",
     "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
     "virtualNetworkName": "vnet",
-    "nodeResourceGroup": "[concat('aks-kubesphere',uniqueString(resourceGroup().id))]",
+    "nodeResourceGroup": "[concat('aks-kubesphere-',uniqueString(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/aks.json', parameters('_artifactsLocationSasToken')))]",
     "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'),concat('scripts/deploykubesphere.sh',parameters('_artifactsLocationSasToken')))]",
