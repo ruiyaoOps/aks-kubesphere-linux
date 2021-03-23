@@ -81,6 +81,13 @@
                 "description": "用于打开和关闭 RBAC 的布尔型标志。"
             }
         },
+        "nodeResourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group containing agent pool nodes."
+            }
+        },
         "vmssNodePool": {
             "type": "bool",
             "defaultValue": true,
@@ -177,6 +184,7 @@
                     }
                 }
             },
+            "nodeResourceGroup": "[parameters('nodeResourceGroup')]",
             "tags": {},
             "identity": {
                 "type": "SystemAssigned"
