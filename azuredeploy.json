@@ -126,7 +126,7 @@
     "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "The size of the AKS VM to create"
+        "description": "The size of the client VM to create"
       },
       "defaultValue": "Standard_D2_V3"
     },
