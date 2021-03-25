@@ -2,53 +2,44 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "value": ""
-        },
-        "CloudName": {
-            "value": "AzureCloud"
-        },
-        "AKSresourceName": {
-            "value": "AKS-KubeSphere"
-        },
-        "osDiskSizeGB": {
-            "value": 0
-        },
-        "kubernetesVersion": {
-            "value": "1.19.7"
-        },
-        "AKSvmSize": {
-            "value": "Standard_D2_V3"
-        },
-        "MasterNodeCount": {
-            "value": 3
-        },
-        "WorkerNodeCount": {
-            "value": 3
-        },
-        "vmName": {
-            "value": "KS-client"
-        },
-        "adminUsername": {
-            "value": ""
-        },
-        "authenticationType": {
-            "value": "sshPublicKey"
-        },
-        "adminPassword": {
-            "value": ""
-        },
-        "sshPublicKey": {
-            "value": ""
-        },
-        "vmSize": {
-            "value": "Standard_D2_V3"
-        },
-        "_artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/ruiyaoOps/aks-kubesphere-linux/master/"
-        },
-        "_artifactsLocationSasToken": {
-            "value": ""
-        }
+      "CloudName": {
+        "value": "AzureChinaCloud"
+      },
+      "AKSresourceName": {
+        "value": "AKS-KubeSphere"
+      },
+      "dnsPrefix": {
+        "value": "AKS-KubeSphere-dns"
+      },
+      "kubernetesVersion": {
+        "value": "1.19.7"
+      },
+      "AKSvmSize": {
+        "value": "Standard_F8s_v2"
+      },
+      "MasterNodeCount": {
+        "value": 1
+      },
+      "WorkerNodeCount": {
+        "value": 1
+      },
+      "enablePrivateCluster": {
+        "value": false
+      },
+      "vmName": {
+        "value": "KS-client"
+      },
+      "adminUsername": {
+        "value": "AzureUser"
+      },
+      "authenticationType": {
+        "value": "password"
+      },
+      "adminPassword": {
+        "value": "ABCabc123456"
+      },
+      "vmSize": {
+        "value": "Standard_F8s_v2"
+      }
     }
 }

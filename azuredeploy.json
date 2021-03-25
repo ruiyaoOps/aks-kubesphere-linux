@@ -11,7 +11,7 @@
     },
     "CloudName": {
         "type": "string",
-        "defaultValue": "AzureCloud",
+        "defaultValue": "AzureChinaCloud",
         "allowedValues": [
             "AzureChinaCloud",
             "AzureCloud"
