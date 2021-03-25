@@ -44,7 +44,7 @@
                         "defaultValue": "AKS-KubeSphere",
                         "toolTip": "The name of AKS resource",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },
@@ -57,7 +57,7 @@
                         "defaultValue": "AKS-KubeSphere-dns",
                         "toolTip": "Optional DNS prefix to use with hosted Kubernetes API server FQDN.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },
@@ -70,10 +70,10 @@
                         "max": 1023,
                         "label": "Os Disk Size GB",
                         "defaultValue": 0,
-                        "subLabel": "MB",
+                        "subLabel": "GB",
                         "toolTip": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },
@@ -86,7 +86,7 @@
                         "defaultValue": "1.19.7",
                         "toolTip": "The version of Kubernetes.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "allowedValues": [
                                 {
                                     "label": "1.17.13",
@@ -123,7 +123,7 @@
                         "defaultValue": "Standard_F8s_v2",
                         "toolTip": "The size of the AKS VM to create",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },
@@ -133,21 +133,21 @@
                         "name": "MasterNodeCount",
                         "type": "Microsoft.Common.DropDown",
                         "label": "Master Node Count",
-                        "defaultValue": 3,
+                        "defaultValue": "3",
                         "toolTip": "The number of Master node.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "allowedValues": [
                                 {
-                                    "label": 1,
+                                    "label": "1",
                                     "value": 1
                                 },
                                 {
-                                    "label": 3,
+                                    "label": "3",
                                     "value": 3
                                 },
                                 {
-                                    "label": 5,
+                                    "label": "5",
                                     "value": 5
                                 }
                             ]
@@ -158,33 +158,33 @@
                         "name": "WorkerNodeCount",
                         "type": "Microsoft.Common.DropDown",
                         "label": "Worker Node Count",
-                        "defaultValue": 3,
+                        "defaultValue": "3",
                         "toolTip": "The number of Worker node.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "allowedValues": [
                                 {
-                                    "label": 1,
+                                    "label": "1",
                                     "value": 1
                                 },
                                 {
-                                    "label": 2,
+                                    "label": "2",
                                     "value": 2
                                 },
                                 {
-                                    "label": 3,
+                                    "label": "3",
                                     "value": 3
                                 },
                                 {
-                                    "label": 4,
-                                    "value": "4"
+                                    "label": "4",
+                                    "value": 4
                                 },
                                 {
-                                    "label": 5,
+                                    "label": "5",
                                     "value": 5
                                 },
                                 {
-                                    "label": 6,
+                                    "label": "6",
                                     "value": 6
                                 }
                             ]
@@ -230,7 +230,7 @@
                         "defaultValue": "KS-client",
                         "toolTip": "Name of Virtual Machine.",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },
@@ -256,7 +256,7 @@
                         "defaultValue": "password",
                         "toolTip": "Authentication type",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "allowedValues": [
                                 {
                                     "label": "password",
@@ -313,7 +313,7 @@
                         "defaultValue": "Standard_D2_V3",
                         "toolTip": "The size of the VM to create",
                         "constraints": {
-                            "required": false,
+                            "required": true,
                             "regex": "",
                             "validationMessage": ""
                         },

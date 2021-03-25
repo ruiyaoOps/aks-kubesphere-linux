@@ -5,6 +5,7 @@ export CloudName=$1
 export SubscriptionID=$2
 export ResourceGroup=$3
 export resourceName=$4
+export nodeResourceGroup=$5
 
 echo $(date) " - Install Azure-cli"
 
@@ -481,3 +482,40 @@ else
     exit
 fi
 echo $(date) " - Deploy KubeSphere Complete"
+
+# set loadbalance
+## set loadbalance probe
+az network lb probe create --lb-name kubernetes \
+--resource-group $nodeResourceGroup \
+--name kubesphere \
+--port 30880 \
+--protocol tcp
+
+## set loadbalance rule
+az network lb rule create --lb-name kubernetes \
+--resource-group $nodeResourceGroup \
+--name kubesphere \
+--backend-port 30880 \
+--frontend-port 30880 \
+--protocol tcp \
+--backend-pool-name kubernetes \
+--probe-name kubesphere \
+--disable-outbound-snat true \
+--enable-tcp-reset false \
+--floating-ip false
+
+# set nsg
+## get nsg name
+NSGname = `az network nsg list --resource-group $nodeResourceGroup | grep name | grep aks-agentpool|awk -F"\"" '{print $4}'`
+
+## set nsg rule
+az network nsg rule create --resource-group $nodeResourceGroup \
+--nsg-name $NSGname \
+--name kubesphereNSGrule \
+--priority 210 \
+--access Allow \
+--source-address-prefixes '*' \
+--source-port-ranges '*' \
+--destination-address-prefixes '*' \
+--destination-port-ranges 30880 \
+--protocol Tcp
