@@ -480,7 +480,7 @@
                 ]
               },
             "protectedSettings": {
-                              "commandToExecute": "[concat('bash ',variables('KubeSphereInstallScriptFileName'),' \"',parameters('CloudName'),'\" ','\"',subscription().id,'\" ','\"',resourceGroup().name,'\" ','\"',parameters('AKSresourceName'),'\" ','\"',variables('nodeResourceGroup'),'\" ', '>>/tmp/deploy.log')]"
+                              "commandToExecute": "[concat('bash ',variables('KubeSphereInstallScriptFileName'),' \"',parameters('CloudName'),'\" ','\"',subscription().id,'\" ','\"',resourceGroup().name,'\" ','\"',parameters('AKSresourceName'),'\" ','\"',variables('nodeResourceGroup'),'\" ', '&>/tmp/deploy.log')]"
             }
         }
     }
