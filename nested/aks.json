@@ -4,7 +4,6 @@
     "parameters": {
         "AKSresourceName": {
             "type": "string",
-            "defaultValue": "AKS-KubeSphere",
             "metadata": {
                 "description": "The name of AKS resource"
             }
@@ -18,7 +17,6 @@
         },
         "dnsPrefix": {
             "type": "string",
-            "defaultValue": "AKS-KubeSphere-dns",
             "metadata": {
                 "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
             }
@@ -58,22 +56,10 @@
                 "azure",
                 "kubenet"
             ],
-            "defaultValue": "azure",
+            "defaultValue": "kubenet",
             "metadata": {
                 "description": "用于构建 Kubernetes 网络的网络插件。"
             }
-        },
-        "vnetSubnetID": {
-            "type": "string"
-        },
-        "serviceCidr": {
-            "type": "string"
-        },
-        "dnsServiceIP": {
-            "type": "string"
-        },
-        "dockerBridgeCidr": {
-            "type": "string"
         },
         "enableRBAC": {
             "type": "bool",
@@ -104,7 +90,7 @@
         },
         "enablePrivateCluster": {
             "type": "bool",
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "启用对 Kubernetes 群集的专用网络访问。"
             }
@@ -118,14 +104,13 @@
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_F8s_v2",
             "metadata": {
                 "description": "虚拟机资源大小，Standard_F8s_v2 - 8vcpu、16GiB"
             }
         },
         "networkPolicy": {
             "type": "string",
-            "defaultValue": "azure",
+            "defaultValue": "calico",
             "metadata": {
                 "description": "用于构建 Kubernetes 网络的网络策略。"
             }
@@ -133,8 +118,8 @@
     },
     "resources": [
         {
-            "type": "Microsoft.ContainerService/managedClusters",
             "apiVersion": "2020-09-01",
+            "type": "Microsoft.ContainerService/managedClusters",
             "location": "[parameters('location')]",
             "name": "[parameters('AKSresourceName')]",
             "properties": {
@@ -151,8 +136,7 @@
                         "storageProfile": "ManagedDisks",
                         "type": "VirtualMachineScaleSets",
                         "mode": "System",
-                        "maxPods": 110,
-                        "vnetSubnetID": "[parameters('vnetSubnetID')]"
+                        "maxPods": 110
                     },
                     {
                         "name": "workerpools",
@@ -163,17 +147,13 @@
                         "storageProfile": "ManagedDisks",
                         "type": "VirtualMachineScaleSets",
                         "mode": "User",
-                        "maxPods": 110,
-                        "vnetSubnetID": "[parameters('vnetSubnetID')]"
+                        "maxPods": 110
                     }
                 ],
                 "networkProfile": {
                     "loadBalancerSku": "standard",
                     "networkPlugin": "[parameters('networkPlugin')]",
-                    "networkPolicy": "[parameters('networkPolicy')]",
-                    "serviceCidr": "[parameters('serviceCidr')]",
-                    "dnsServiceIP": "[parameters('dnsServiceIP')]",
-                    "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+                    "networkPolicy": "[parameters('networkPolicy')]"
                 },
                 "apiServerAccessProfile": {
                     "enablePrivateCluster": "[parameters('enablePrivateCluster')]"
@@ -191,5 +171,6 @@
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+    }
 }

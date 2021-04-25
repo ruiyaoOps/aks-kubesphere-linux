@@ -53,7 +53,7 @@
             "1.19.6",
             "1.19.7"
         ],
-        "defaultValue": "1.19.7",
+        "defaultValue": "1.18.14",
         "metadata": {
             "description": "The version of Kubernetes."
         }
@@ -149,7 +149,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/ruiyaoOps/aks-kubesphere-linux/master/"
+      "defaultValue": "https://stage3cc657c263f5474e822.blob.core.chinacloudapi.cn/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -171,12 +171,9 @@
     "subnetPrefix": "10.0.0.0/24",
     "AKSSubnetName": "KubeSphereRG-vnet-aks",
     "AKSSubnetAddressRange": "10.0.128.0/20",
-    "AKSServiceAddressRange": "10.10.0.0/16",
-    "AKSdnsServiceIP": "10.10.0.10",
-    "dockerBridgeCidr": "172.17.0.1/16",
-    "networkPlugin": "azure",
+    "networkPlugin": "kubenet",
     "vmssNodePool": true,
-    "networkPolicy": "azure",
+    "networkPolicy": "calico",
     "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
     "virtualNetworkName": "vnet",
     "nodeResourceGroup": "[concat('aks-kubesphere-',uniqueString(resourceGroup().id))]",
@@ -214,6 +211,8 @@
       "name": "[variables('stateStorageAccountName')]",
       "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
+      "resources": [
+      ],
       "sku": {
         "name": "Standard_LRS"
       },
@@ -247,6 +246,7 @@
         "subnets": [
           {
             "name": "[variables('subnetName')]",
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnetName'))]",
             "properties": {
               "addressPrefix": "[variables('subnetPrefix')]",
               "networkSecurityGroup": {
@@ -256,6 +256,7 @@
           },
           {
             "name": "[variables('AKSSubnetName')]",
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('AKSSubnetName'))]",
             "properties": {
               "addressPrefix": "[variables('AKSSubnetAddressRange')]",
               "networkSecurityGroup": {
@@ -287,17 +288,16 @@
             }
           },
           {
-            "name": "kubesphere-console",
+            "name": "default-allow-kubesphere",
             "properties": {
-              "description": "Allow kubesphere console",
+              "priority": 1100,
+              "sourceAddressPrefix": "*",
               "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "30880",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
               "access": "Allow",
-              "priority": 1001,
-              "direction": "Inbound"
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
             }
           }
         ]
@@ -339,7 +339,8 @@
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-          "[resourceId('Microsoft.Network/networkinterfaces', variables('nicName'))]"
+          "[resourceId('Microsoft.Network/networkinterfaces', variables('nicName'))]",
+          "[resourceId('Microsoft.Resources/deployments', 'AKSDeployment')]"
       ],
       "identity": {
         "type": "SystemAssigned"
@@ -378,7 +379,7 @@
       }
     },
     {
-      "apiVersion": "2019-04-01-preview",
+      "apiVersion": "2020-04-01-preview",
       "name": "[guid(resourceGroup().id, variables('contributor'))]",
       "type": "Microsoft.Authorization/roleAssignments",
       "dependsOn": [
@@ -396,8 +397,7 @@
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2019-05-01",
         "dependsOn": [
-            "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-            "[resourceId('Microsoft.Authorization/roleAssignments',guid(resourceGroup().id, variables('contributor')))]"
+            "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
         ],
         "properties": {
             "mode": "Incremental",
@@ -414,15 +414,6 @@
                 },
                 "dnsPrefix": {
                     "value": "[parameters('dnsPrefix')]"
-                },
-                "serviceCidr": {
-                    "value": "[variables('AKSServiceAddressRange')]"
-                },
-                "dnsServiceIP": {
-                    "value": "[variables('AKSdnsServiceIP')]"
-                },
-                "dockerBridgeCidr": {
-                    "value": "[variables('dockerBridgeCidr')]"
                 },
                 "vmSize": {
                     "value": "[parameters('AKSvmSize')]"
@@ -441,9 +432,6 @@
                 },
                 "networkPlugin": {
                     "value": "[variables('networkPlugin')]"
-                },
-                "vnetSubnetID": {
-                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('AKSSubnetName'))]"
                 },
                 "vmssNodePool": {
                     "value": "[variables('vmssNodePool')]"
@@ -467,7 +455,8 @@
         "location": "[parameters('location')]",
         "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
-            "[resourceId('Microsoft.Resources/deployments', 'AKSDeployment')]"
+            "[resourceId('Microsoft.Resources/deployments', 'AKSDeployment')]",
+            "[resourceId('Microsoft.Authorization/roleAssignments',guid(resourceGroup().id, variables('contributor')))]"
         ],
         "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -480,15 +469,35 @@
                 ]
               },
             "protectedSettings": {
-                              "commandToExecute": "[concat('bash ',variables('KubeSphereInstallScriptFileName'),' \"',parameters('CloudName'),'\" ','\"',subscription().id,'\" ','\"',resourceGroup().name,'\" ','\"',parameters('AKSresourceName'),'\" ', '>>/tmp/deploy.log')]"
+                              "commandToExecute": "[concat('bash ',variables('KubeSphereInstallScriptFileName'),' ',parameters('CloudName'),' ',resourceGroup().name,' ',parameters('AKSresourceName'),' >>/tmp/deploy.log 2>&1')]"
             }
         }
     }
   ],
   "outputs": {
-    "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2019-09-01').dnsSettings.fqdn]",
-      "type": "string"
+    "查看公共 IP 地址": {
+      "type": "string",
+      "value": "请在 Azure 门户中进入'资源组'，找到资源组中名为'aks-kubesphere-XXX'的资源组并进入'。 进入 'kubernetes' 负载均衡器，查看'负载均衡规则'中使用的'前端IP地址' "
+    },
+    "kubesphere登陆地址": {
+      "type": "string",
+      "value": "http://前端IP地址"
+    },
+    "默认管理员用户名": {
+      "type": "string",
+      "value": "admin"
+    },
+    "默认管理员用户名密码": {
+      "type": "string",
+      "value": "P@88w0rd"
+    },
+    "kubesphere 部署日志": {
+      "type": "string",
+      "value": "KubeSphere 部署日志请查看客户端节点 /tmp/deploy.log 文件"
+    },
+    "注意": {
+      "type": "string",
+      "value": "第一次登陆后请修改默认密码"
     }
   }
 }

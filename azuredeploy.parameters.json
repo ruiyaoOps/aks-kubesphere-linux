@@ -2,17 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-      "CloudName": {
-        "value": "AzureChinaCloud"
-      },
       "AKSresourceName": {
         "value": "AKS-KubeSphere"
       },
       "dnsPrefix": {
         "value": "AKS-KubeSphere-dns"
       },
+      "osDiskSizeGB": {
+        "value": 100
+      },
       "kubernetesVersion": {
-        "value": "1.19.7"
+        "value": "1.18.14"
       },
       "AKSvmSize": {
         "value": "Standard_F8s_v2"
@@ -24,7 +24,7 @@
         "value": 1
       },
       "enablePrivateCluster": {
-        "value": false
+        "value": true
       },
       "vmName": {
         "value": "KS-client"
@@ -39,7 +39,7 @@
         "value": "ABCabc123456"
       },
       "vmSize": {
-        "value": "Standard_F8s_v2"
+        "value": "Standard_D8s_v3"
       }
     }
 }

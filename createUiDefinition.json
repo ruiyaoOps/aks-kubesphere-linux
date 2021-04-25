@@ -3,46 +3,41 @@
     "handler": "Microsoft.Azure.CreateUIDef",
     "version": "0.1.2-preview",
     "parameters": {
+        "config": {
+            "basics": {
+                "description": "KubeSphere 是在 Kubernetes 之上构建的面向云原生应用的分布式操作系统，完全开源，支持多云与多集群管理，提供全栈的 IT 自动化运维能力，简化企业的 DevOps 工作流。它的架构可以非常方便地使第三方应用与云原生生态组件进行即插即用 (plug-and-play) 的集成。 [Learn more](https://kubesphere.com.cn/ \"Learn more\")",
+                "location": {
+                    "label": "区域",
+                    "toolTip": "请选择适合你和你的客户的 Azure 区域。并非每个资源在每个区域都可用。",
+                    "resourceTypes": [
+                        "Microsoft.Compute/virtualMachines"
+                    ],
+                    "allowedValues": [
+                        "chinaeast2",
+                        "chinanorth2"
+                    ],
+                    "visible": true
+                }
+            }
+        },
         "basics": [
-            {}
          ],
         "steps": [
             {
                 "name": "AKSsetting",
-                "label": "AKS",
-                "bladeTitle": "AKS 设置",
+                "label": "AKS 详细设置",
+                "bladeTitle": "AKS 详细设置",
                 "subLabel": {
                     "preValidation": "Set AKS",
                     "postValidation": "Deploy AKS"
                 },
                 "elements": [
                     {
-                        "name": "CloudName",
-                        "type": "Microsoft.Common.DropDown",
-                        "label": "Cloud Name",
-                        "defaultValue": "AzureChinaCloud",
-                        "toolTip": "Use AzureChinaCloud will set az Cloud to AzureChinaCloud,only china users should change this to AzureChinaCloud.",
-                        "constraints": {
-                            "required": false,
-                            "allowedValues": [
-                                {
-                                    "label": "AzureChinaCloud",
-                                    "value": "AzureChinaCloud"
-                                },
-                                {
-                                    "label": "AzureCloud",
-                                    "value": "AzureCloud"
-                                }
-                            ]
-                        },
-                        "visible": true
-                    },
-                    {
                         "name": "AKSresourceName",
                         "type": "Microsoft.Common.TextBox",
-                        "label": "AK Sresource Name",
+                        "label": "AKS 服务集群名称",
                         "defaultValue": "AKS-KubeSphere",
-                        "toolTip": "The name of AKS resource",
+                        "toolTip": "Azure Kubernetes 服务群集的名称。",
                         "constraints": {
                             "required": true,
                             "regex": "",
@@ -53,9 +48,9 @@
                     {
                         "name": "dnsPrefix",
                         "type": "Microsoft.Common.TextBox",
-                        "label": "Dns Prefix",
+                        "label": "DNS 名称前缀",
                         "defaultValue": "AKS-KubeSphere-dns",
-                        "toolTip": "Optional DNS prefix to use with hosted Kubernetes API server FQDN.",
+                        "toolTip": "与托管 Kubernetes API 服务器 FQDN 一起使用的 DNS 名称前缀。创建群集后，在管理容器时，可以使用此前缀连接到 Kubernetes API。",
                         "constraints": {
                             "required": true,
                             "regex": "",
@@ -65,26 +60,43 @@
                     },
                     {
                         "name": "osDiskSizeGB",
-                        "type": "Microsoft.Common.Slider",
-                        "min": 0,
-                        "max": 1023,
-                        "label": "Os Disk Size GB",
-                        "defaultValue": 0,
-                        "subLabel": "GB",
-                        "toolTip": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize.",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "节点磁盘大小",
+                        "defaultValue": "100",
+                        "toolTip": "为每个代理池节点预配的磁盘大小(以 GiB 为单位)。",
                         "constraints": {
                             "required": true,
-                            "regex": "",
-                            "validationMessage": ""
+                            "allowedValues": [
+                                {
+                                    "label": "50",
+                                    "value": 50
+                                },
+                                {
+                                    "label": "100",
+                                    "value": 100
+                                },
+                                {
+                                    "label": "200",
+                                    "value": 200
+                                },
+                                {
+                                    "label": "500",
+                                    "value": 500
+                                },
+                                {
+                                    "label": "1000",
+                                    "value": 1000
+                                }
+                            ]
                         },
                         "visible": true
                     },
                     {
                         "name": "kubernetesVersion",
                         "type": "Microsoft.Common.DropDown",
-                        "label": "Kubernetes Version",
-                        "defaultValue": "1.19.7",
-                        "toolTip": "The version of Kubernetes.",
+                        "label": "Kubernetes 版本",
+                        "defaultValue": "1.18.14",
+                        "toolTip": "应用于此群集的 Kubernetes 的版本。在创建群集后将能够升级此版本.",
                         "constraints": {
                             "required": true,
                             "allowedValues": [
@@ -103,14 +115,6 @@
                                 {
                                     "label": "1.18.14",
                                     "value": "1.18.14"
-                                },
-                                {
-                                    "label": "1.19.6",
-                                    "value": "1.19.6"
-                                },
-                                {
-                                    "label": "1.19.7",
-                                    "value": "1.19.7"
                                 }
                             ]
                         },
@@ -118,23 +122,59 @@
                     },
                     {
                         "name": "AKSvmSize",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "AK Svm Size",
-                        "defaultValue": "Standard_F8s_v2",
-                        "toolTip": "The size of the AKS VM to create",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "AKS 节点大小",
+                        "defaultValue": "Standard_F8s_v2 (8核16G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                        "toolTip": "将在群集中组成节点的虚拟机的大小。创建群集后不能更改此大小。",
                         "constraints": {
                             "required": true,
-                            "regex": "",
-                            "validationMessage": ""
+                            "allowedValues": [
+                                {
+                                    "label": "Standard_D2_V3 (2核8G，非高级存储)",
+                                    "value": "Standard_D2_V3"
+                                },
+                                {
+                                    "label": "Standard_D4s_v3 (4核16G，用于常规用途)",
+                                    "value": "Standard_D4s_v3"
+                                },
+                                {
+                                    "label": "Standard_D8s_v3 (8核32G，用于常规用途)",
+                                    "value": "Standard_D8s_v3"
+                                },
+                                {
+                                    "label": "Standard_D16s_v3 (16核64G，用于常规用途)",
+                                    "value": "Standard_D16s_v3"
+                                },
+                                {
+                                    "label": "Standard_A4_v2 (4核8G，适合入门级工作负载)",
+                                    "value": "Standard_A4_v2"
+                                },
+                                {
+                                    "label": "Standard_A8_v2 (8核16G，适合入门级工作负载)",
+                                    "value": "Standard_A8_v2"
+                                },
+                                {
+                                    "label": "Standard_F4s_v2 (4核8G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F4s_v2"
+                                },
+                                {
+                                    "label": "Standard_F8s_v2 (8核16G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F8s_v2"
+                                },
+                                {
+                                    "label": "Standard_F16s_v2 (16核32G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F16s_v2"
+                                }
+                            ]
                         },
                         "visible": true
                     },
                     {
                         "name": "MasterNodeCount",
                         "type": "Microsoft.Common.DropDown",
-                        "label": "Master Node Count",
+                        "label": "System 节点数",
                         "defaultValue": "3",
-                        "toolTip": "The number of Master node.",
+                        "toolTip": "和节点一起创建的 System 节点数，你可以在集群创建后调整节点数。",
                         "constraints": {
                             "required": true,
                             "allowedValues": [
@@ -144,7 +184,15 @@
                                 },
                                 {
                                     "label": "3",
+                                    "value": 2
+                                },
+                                {
+                                    "label": "3",
                                     "value": 3
+                                },
+                                {
+                                    "label": "4",
+                                    "value": 4
                                 },
                                 {
                                     "label": "5",
@@ -157,9 +205,9 @@
                     {
                         "name": "WorkerNodeCount",
                         "type": "Microsoft.Common.DropDown",
-                        "label": "Worker Node Count",
+                        "label": "User 节点数",
                         "defaultValue": "3",
-                        "toolTip": "The number of Worker node.",
+                        "toolTip": "和节点一起创建的 User 节点数，你可以在集群创建后调整节点数。",
                         "constraints": {
                             "required": true,
                             "allowedValues": [
@@ -186,6 +234,18 @@
                                 {
                                     "label": "6",
                                     "value": 6
+                                },
+                                {
+                                    "label": "7",
+                                    "value": 7
+                                },
+                                {
+                                    "label": "8",
+                                    "value": 8
+                                },
+                                {
+                                    "label": "9",
+                                    "value": 9
                                 }
                             ]
                         },
@@ -194,9 +254,9 @@
                     {
                         "name": "enablePrivateCluster",
                         "type": "Microsoft.Common.DropDown",
-                        "label": "Enable Private Cluster",
+                        "label": "启用专用集群",
                         "defaultValue": "false",
-                        "toolTip": "Enable private network access to the kubernetes cluster.",
+                        "toolTip": "专用群集使用内部 IP 地址来确保 API 服务器和节点池之间的网络流量仅保留在专用网络上。",
                         "constraints": {
                             "required": false,
                             "allowedValues": [
@@ -216,8 +276,8 @@
             },
             {
                 "name": "ClientNodesetting",
-                "label": "client",
-                "bladeTitle": "client node setting",
+                "label": "客户端节点设置",
+                "bladeTitle": "客户端节点设置",
                 "subLabel": {
                     "preValidation": "Set client node",
                     "postValidation": "Deploy client node"
@@ -226,12 +286,12 @@
                     {
                         "name": "vmName",
                         "type": "Microsoft.Common.TextBox",
-                        "label": "Vm Name",
+                        "label": "客户端节点名称",
                         "defaultValue": "KS-client",
-                        "toolTip": "Name of Virtual Machine.",
+                        "toolTip": "客户端节点名称，用于管理 AKS 集群，创建后不可修改虚拟机名称，但可登陆虚拟机更改主机名。",
                         "constraints": {
                             "required": true,
-                            "regex": "",
+                            "regex": "^[a-z0-9A-Z-*/+.~!@#$%^&*()]{3,30}$",
                             "validationMessage": ""
                         },
                         "visible": true
@@ -239,7 +299,7 @@
                     {
                         "name": "adminUsername",
                         "type": "Microsoft.Common.TextBox",
-                        "label": "Admin Username",
+                        "label": "管理员用户名",
                         "defaultValue": "",
                         "toolTip": "Username for the Virtual Machine.",
                         "constraints": {
@@ -250,72 +310,77 @@
                         "visible": true
                     },
                     {
-                        "name": "authenticationType",
+                      "name": "authenticationType",
+                      "type": "Microsoft.Compute.CredentialsCombo",
+                      "label": {
+                        "authenticationType": "认证方式",
+                        "password": "管理员用户密码",
+                        "confirmPassword": "确认管理员用户密码",
+                        "sshPublicKey": "管理员用户 ssh 公钥"
+                      },
+                      "toolTip": {
+                        "authenticationType": "客户端节点认证方式，默认为密码认证。创建完成后可以在 Azure 管理页面上重置密码。",
+                        "password": "客户端节点密码",
+                        "sshPublicKey": "客户端节点公共密钥"
+                      },
+                      "constraints": {
+                        "required": true,
+                        "customPasswordRegex": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d-*/+.~!@#$%^&*()]{12,}$",
+                        "customValidationMessage": "密码必须是字母数字，至少包含12个字符，并且至少有1个字母和1个数字,可含有部分特殊字符。"
+                      },
+                      "options": {
+                        "hideConfirmation": false,
+                        "hidePassword": false
+                      },
+                      "osPlatform": "Linux",
+                      "visible": true
+                    },
+                    {
+                        "name": "vmSize",
                         "type": "Microsoft.Common.DropDown",
-                        "label": "Authentication Type",
-                        "defaultValue": "password",
-                        "toolTip": "Authentication type",
+                        "label": "客户端虚拟机节点大小",
+                        "defaultValue": "Standard_D2_V3 (2核8G，非高级存储)",
+                        "toolTip": "客户端虚拟机的大小。创建群集后不能更改此大小。",
                         "constraints": {
                             "required": true,
                             "allowedValues": [
                                 {
-                                    "label": "password",
-                                    "value": "password"
+                                    "label": "Standard_D2_V3 (2核8G，非高级存储)",
+                                    "value": "Standard_D2_V3"
                                 },
                                 {
-                                    "label": "sshPublicKey",
-                                    "value": "sshPublicKey"
+                                    "label": "Standard_D4s_v3 (4核16G，用于常规用途)",
+                                    "value": "Standard_D4s_v3"
+                                },
+                                {
+                                    "label": "Standard_D8s_v3 (8核32G，用于常规用途)",
+                                    "value": "Standard_D8s_v3"
+                                },
+                                {
+                                    "label": "Standard_D16s_v3 (16核64G，用于常规用途)",
+                                    "value": "Standard_D16s_v3"
+                                },
+                                {
+                                    "label": "Standard_A4_v2 (4核8G，适合入门级工作负载)",
+                                    "value": "Standard_A4_v2"
+                                },
+                                {
+                                    "label": "Standard_A8_v2 (8核16G，适合入门级工作负载)",
+                                    "value": "Standard_A8_v2"
+                                },
+                                {
+                                    "label": "Standard_F4s_v2 (4核8G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F4s_v2"
+                                },
+                                {
+                                    "label": "Standard_F8s_v2 (8核16G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F8s_v2"
+                                },
+                                {
+                                    "label": "Standard_F16s_v2 (16核32G，对于矢量处理工作负载，最高可提升2倍的性能)",
+                                    "value": "Standard_F16s_v2"
                                 }
                             ]
-                        },
-                        "visible": true
-                    },
-                    {
-                        "name": "adminPassword",
-                        "type": "Microsoft.Common.PasswordBox",
-                        "label": {
-                            "password": "Admin Password",
-                            "confirmPassword": "Confirm password"
-                        },
-                        "toolTip": "Password for the Virtual Machine.",
-                        "constraints": {
-                            "required": false,
-                            "regex": "",
-                            "validationMessage": ""
-                        },
-                        "options": {
-                            "hideConfirmation": true
-                        },
-                        "visible": true
-                    },
-                    {
-                        "name": "sshPublicKey",
-                        "type": "Microsoft.Common.PasswordBox",
-                        "label": {
-                            "password": "Ssh Public Key",
-                            "confirmPassword": "Confirm password"
-                        },
-                        "toolTip": "ssh key for the Virtual Machine.",
-                        "constraints": {
-                            "required": false,
-                            "regex": "",
-                            "validationMessage": ""
-                        },
-                        "options": {
-                            "hideConfirmation": true
-                        },
-                        "visible": true
-                    },
-                    {
-                        "name": "vmSize",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "Vm Size",
-                        "defaultValue": "Standard_D2_V3",
-                        "toolTip": "The size of the VM to create",
-                        "constraints": {
-                            "required": true,
-                            "regex": "",
-                            "validationMessage": ""
                         },
                         "visible": true
                     }
@@ -323,7 +388,6 @@
             }
          ],
         "outputs": { 
-            "CloudName": "[steps('AKSsetting').CloudName]",
             "AKSresourceName": "[steps('AKSsetting').AKSresourceName]",
             "dnsPrefix": "[steps('AKSsetting').dnsPrefix]",
             "osDiskSizeGB": "[steps('AKSsetting').osDiskSizeGB]",
@@ -334,9 +398,9 @@
             "enablePrivateCluster": "[steps('AKSsetting').enablePrivateCluster]",
             "vmName": "[steps('ClientNodesetting').vmName]",
             "adminUsername": "[steps('ClientNodesetting').adminUsername]",
-            "authenticationType": "[steps('ClientNodesetting').authenticationType]",
-            "adminPassword": "[steps('ClientNodesetting').adminPassword]",
-            "sshPublicKey": "[steps('ClientNodesetting').sshPublicKey]",
+            "authenticationType": "[steps('ClientNodesetting').authenticationType.authenticationType]",
+            "adminPassword": "[steps('ClientNodesetting').authenticationType.password]",
+            "sshPublicKey": "[steps('ClientNodesetting').authenticationType.sshPublicKey]",
             "vmSize": "[steps('ClientNodesetting').vmSize]"
         }
     }

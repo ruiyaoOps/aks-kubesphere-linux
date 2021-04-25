@@ -2,69 +2,91 @@
 echo $(date) " - ############## Starting Script ####################"
 
 export CloudName=$1
-export SubscriptionID=$2
-export ResourceGroup=$3
-export resourceName=$4
-export nodeResourceGroup=$5
+export ResourceGroup=$2
+export resourceName=$3
 
+
+
+function install_azure_cli(){
+  apt-get update
+  sudo apt-get install -y jq
+  sudo apt-get install unzip
+
+  TF_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M ".current_version")
+  wget -O terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+  wget -O terraform.sha256 https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS
+  wget -O terraform.sha256.sig https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS.sig
+  curl -s https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
+  gpg --verify terraform.sha256.sig terraform.sha256
+  echo $(grep -Po "[[:xdigit:]]{64}(?=\s+terraform_${TF_VERSION}_linux_amd64.zip)" terraform.sha256) terraform.zip | sha256sum -c
+  unzip terraform.zip
+  mv terraform /usr/local/bin
+  rm -f terraform terraform.zip terraform.sha256 terraform.sha256.sig
+  unset TF_VERSION
+
+  echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+  sudo curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  sudo apt-get install apt-transport-https
+  sudo apt-get update && sudo apt-get install azure-cli
+}
+
+ function login_azure(){
+  if [[ "$CloudName" == AzureChinaCloud ]];then
+    az cloud set -n AzureChinaCloud
+  fi
+  az login --identity
+  if [ $? -eq 0 ];then
+      echo "azure cloud login succeed"
+  else
+      echo "azure cloud login failed,please check MSI status."
+  fi
+ }
+
+function get_kubeconfig(){
+  az aks install-cli
+  az aks get-credentials --resource-group "$ResourceGroup" --name "$resourceName"
+}
+
+function check_kubernetes_status(){
+  echo $(date) " - Deploy KubeSphere"
+  for i in $(seq 10 -1 1)
+  do
+    sudo kubectl get nodes
+    if [ $? -eq 0 ];then
+        echo "KubeSphere installing..."
+        break
+    else
+      echo "$i"
+      get_kubeconfig
+      sleep 5
+    fi
+  done
+}
+
+# install Azure CLI
 echo $(date) " - Install Azure-cli"
-
-apt-get update
-
-wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.1/terraform_0.11.1_linux_amd64.zip?_ga=2.228206621.1801000149.1512425211-1345627201.1504718143
-sudo apt-get install -y jq
-
-sudo apt-get install unzip
-
-unzip terraform.zip
-
-
-TF_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M ".current_version")
-wget -O terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-wget -O terraform.sha256 https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS
-wget -O terraform.sha256.sig https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS.sig
-curl -s https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
-gpg --verify terraform.sha256.sig terraform.sha256
-echo $(grep -Po "[[:xdigit:]]{64}(?=\s+terraform_${TF_VERSION}_linux_amd64.zip)" terraform.sha256) terraform.zip | sha256sum -c
-unzip terraform.zip
-mv terraform /usr/local/bin
-rm -f terraform terraform.zip terraform.sha256 terraform.sha256.sig
-unset TF_VERSION
-
-
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-
-sudo curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-
-sudo apt-get install apt-transport-https
-
-sudo apt-get update && sudo apt-get install azure-cli
-
+install_azure_cli
 echo $(date) " - Install Azure-cli Complete"
 
 # login Azure
 echo $(date) " - Login Azure"
-if [[ "$CloudName" == AzureChinaCloud ]];then
-    az cloud set -n AzureChinaCloud
-fi
-az login --identity
-if [ $? -eq 0 ];then
-    echo "azure cloud login succeed"
-else
-    echo "azure cloud login failed,please check CloudName SPName SPPasswoed and SPTenant settings"
-fi
-## get kubeconfig
-az account set --subscription "$SubscriptionID"
-az aks get-credentials --resource-group "$ResourceGroup" --name "$resourceName"
+login_azure
 echo $(date) " - Login Azure complete"
 
-# deploy KubeSphere
-## Download kubectl
-echo $(date) " - Deploy KubeSphere"
-az aks install-cli
+# get kubeconfig
+echo $(date) " - Get kubeconfig"
+get_kubeconfig
+echo $(date) " - Get kubeconfig complete"
+
+# check kubernetes status
+echo $(date) " - check kubernetes status"
+check_kubernetes_status
+echo $(date) " - check kubernetes status complete"
+
+
 
 ## deploy KubeSphere
-cat >/tmp/kubesphere-installer.yaml<<EOF
+cat >>/tmp/kubesphere-installer.yaml<<EOF
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -344,7 +366,7 @@ spec:
         name: host-time
 EOF
 
-cat >/tmp/cluster-configuration.yaml<<EOF
+cat >>/tmp/cluster-configuration.yaml<<EOF
 ---
 apiVersion: installer.kubesphere.io/v1alpha1
 kind: ClusterConfiguration
@@ -460,25 +482,114 @@ spec:
         tolerations: []
 EOF
 
-for i in $(seq 10 -1 1)
-do
-  sudo kubectl apply -f /tmp/kubesphere-installer.yaml
-  if [ $? -eq 0 ];then
-      echo "KubeSphere installing..."
-      break
-  else
-    echo "$i"
-    sleep 3
-  fi
-done
+cat >>/tmp/kubesphere-console.yaml<<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ks-console
+    tier: frontend
+  name: ks-console
+  namespace: kubesphere-system
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8000
+    nodePort: 30880
+  selector:
+    app: ks-console
+    tier: frontend
+  type: LoadBalancer
+EOF
 
-sudo kubectl apply -f /tmp/cluster-configuration.yaml
-if [ $? -eq 0 ];then
-    echo "cc deployed"
-else
-    echo "KubeSphere install failed,please check the network status or execute the command:"
-    echo "kubectl apply -f https://github.com/kubesphere/ks-installer/releases/download/v3.0.0/kubesphere-installer.yaml"
-    echo "kubectl apply -f https://github.com/kubesphere/ks-installer/releases/download/v3.0.0/cluster-configuration.yaml"
-    exit
-fi
+function deploy_kubesphere(){
+  sudo kubectl apply -f /tmp/kubesphere-installer.yaml
+  sudo kubectl apply -f  /tmp/cluster-configuration.yaml
+  if [ $? -eq 0 ];then
+      echo "cc deployed"
+  else
+      echo "KubeSphere install failed,please check the network status or execute the command:"
+  fi
+}
+
+function check_installer_ok(){
+    echo "waiting for ks-installer pod ready"
+    sudo kubectl -n kubesphere-system wait --timeout=180s --for=condition=Ready $(sudo kubectl -n kubesphere-system get pod -l app=ks-install -oname)
+    echo "waiting for KubeSphere ready"
+    while IFS= read -r line; do
+        echo $line
+        if [[ $line =~ "Welcome to KubeSphere" ]]
+            then
+                return
+        fi
+    done < <(sudo timeout 1200 kubectl logs -n kubesphere-system deploy/ks-installer -f)
+    echo "ks-install not output 'Welcome to KubeSphere'"
+}
+
+function wait_status_ok(){
+    for ((n=0;n<30;n++))
+    do
+        OK=`sudo kubectl get pod -A| grep -E 'Running|Completed' | wc | awk '{print $1}'`
+        Status=`sudo kubectl get pod -A | sed '1d' | wc | awk '{print $1}'`
+        echo "Success rate: ${OK}/${Status}"
+        if [[ $OK == $Status ]]
+        then
+            n=$((n+1))
+        else
+            n=0
+            sudo kubectl get pod -A | grep -vE 'Running|Completed'
+        fi
+        sleep 1
+    done
+}
+
+function set_kubernetes_lb(){
+  sudo kubectl get svc ks-console -n kubesphere-system -o yaml | sed "s/NodePort/LoadBalancer/g" | sudo kubectl apply -f -
+  if [ $? -eq 0 ];then
+    echo $(date) " - set KubeSphere loadbalance Complete"
+  else
+    echo $(date) " - set KubeSphere loadbalance failed"
+  fi
+  sudo kubectl rollout restart deployments ks-console -n kubesphere-system
+}
+
+function set_user_kubeconfig(){
+  User=`users`
+  cp -rp /root/.kube /home/${User}/
+  chown -R ${User}.${User} /home/${User}/.kube
+}
+
+# deploy kubesphere
+echo $(date) " - Deploy KubeSphere"
+deploy_kubesphere
 echo $(date) " - Deploy KubeSphere Complete"
+
+# check kubesphere status
+echo $(date) " - Check KubeSphere status"
+export -f wait_status_ok
+
+timeout 1800 bash -c wait_status_ok
+
+check_installer_ok
+echo $(date) " - ks-installer Complete"
+
+
+
+# set loadbalance
+echo $(date) " - set KubeSphere loadbalance"
+set_kubernetes_lb
+echo $(date) " - set KubeSphere loadbalance Complete"
+
+# set admin user kubeconfig
+set_user_kubeconfig
+
+# message of login kubesphere
+PIP=`sudo kubectl get svc ks-console -n kubesphere-system|grep "LoadBalancer"|awk '{print $4}'`
+echo "欢迎使用kubesphere"
+echo "登陆地址为: http://$PIP"
+echo "默认管理员用户为: admin"
+echo "默认密码为: P@88w0rd"
+echo ""
+echo "登陆后请修改默认密码。"
+echo "登陆后请在集群管理中检查服务状态，直到所有服务状态为Ready。"
