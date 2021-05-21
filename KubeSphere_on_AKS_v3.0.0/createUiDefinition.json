@@ -59,39 +59,6 @@
                         "visible": true
                     },
                     {
-                        "name": "osDiskSizeGB",
-                        "type": "Microsoft.Common.DropDown",
-                        "label": "节点磁盘大小",
-                        "defaultValue": "100",
-                        "toolTip": "为每个代理池节点预配的磁盘大小(以 GiB 为单位)。",
-                        "constraints": {
-                            "required": true,
-                            "allowedValues": [
-                                {
-                                    "label": "50",
-                                    "value": 50
-                                },
-                                {
-                                    "label": "100",
-                                    "value": 100
-                                },
-                                {
-                                    "label": "200",
-                                    "value": 200
-                                },
-                                {
-                                    "label": "500",
-                                    "value": 500
-                                },
-                                {
-                                    "label": "1000",
-                                    "value": 1000
-                                }
-                            ]
-                        },
-                        "visible": true
-                    },
-                    {
                         "name": "kubernetesVersion",
                         "type": "Microsoft.Common.DropDown",
                         "label": "Kubernetes 版本",
@@ -183,7 +150,7 @@
                                     "value": 1
                                 },
                                 {
-                                    "label": "3",
+                                    "label": "2",
                                     "value": 2
                                 },
                                 {
@@ -246,27 +213,6 @@
                                 {
                                     "label": "9",
                                     "value": 9
-                                }
-                            ]
-                        },
-                        "visible": true
-                    },
-                    {
-                        "name": "enablePrivateCluster",
-                        "type": "Microsoft.Common.DropDown",
-                        "label": "启用专用集群",
-                        "defaultValue": "false",
-                        "toolTip": "专用群集使用内部 IP 地址来确保 API 服务器和节点池之间的网络流量仅保留在专用网络上。",
-                        "constraints": {
-                            "required": false,
-                            "allowedValues": [
-                                {
-                                    "label": "true",
-                                    "value": true
-                                },
-                                {
-                                    "label": "false",
-                                    "value": false
                                 }
                             ]
                         },
@@ -390,12 +336,10 @@
         "outputs": { 
             "AKSresourceName": "[steps('AKSsetting').AKSresourceName]",
             "dnsPrefix": "[steps('AKSsetting').dnsPrefix]",
-            "osDiskSizeGB": "[steps('AKSsetting').osDiskSizeGB]",
             "kubernetesVersion": "[steps('AKSsetting').kubernetesVersion]",
             "AKSvmSize": "[steps('AKSsetting').AKSvmSize]",
             "MasterNodeCount": "[steps('AKSsetting').MasterNodeCount]",
             "WorkerNodeCount": "[steps('AKSsetting').WorkerNodeCount]",
-            "enablePrivateCluster": "[steps('AKSsetting').enablePrivateCluster]",
             "vmName": "[steps('ClientNodesetting').vmName]",
             "adminUsername": "[steps('ClientNodesetting').adminUsername]",
             "authenticationType": "[steps('ClientNodesetting').authenticationType.authenticationType]",

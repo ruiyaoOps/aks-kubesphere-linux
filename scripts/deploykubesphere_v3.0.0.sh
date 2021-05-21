@@ -281,36 +281,6 @@ rules:
   - '*'
   verbs:
   - '*'
-- apiGroups:
-  - security.istio.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - monitoring.kiali.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - kiali.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - kubeedge.kubesphere.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
 
 ---
 kind: ClusterRoleBinding
@@ -347,15 +317,8 @@ spec:
       serviceAccountName: ks-installer
       containers:
       - name: installer
-        image: kubespheredev/ks-installer:latest
+        image: kubesphere/ks-installer:v3.0.0
         imagePullPolicy: "Always"
-        resources:
-          limits:
-            cpu: "1"
-            memory: 1Gi
-          requests:
-            cpu: 20m
-            memory: 100Mi
         volumeMounts:
         - mountPath: /etc/localtime
           name: host-time
@@ -380,7 +343,6 @@ spec:
     storageClass: ""        # If there is not a default StorageClass in your cluster, you need to specify an existing StorageClass here.
   authentication:
     jwtSecret: ""           # Keep the jwtSecret consistent with the host cluster. Retrive the jwtSecret by executing "kubectl -n kubesphere-system get cm kubesphere-config -o yaml | grep -v "apiVersion" | grep jwtSecret" on the host cluster.
-  local_registry: ""        # Add your private registry address if it is needed.
   etcd:
     monitoring: false       # Whether to enable etcd monitoring dashboard installation. You have to create a secret for etcd before you enable it.
     endpointIps: localhost  # etcd cluster EndpointIps, it can be a bunch of IPs here.
@@ -392,8 +354,6 @@ spec:
     etcdVolumeSize: 20Gi  # etcd PVC size.
     openldapVolumeSize: 2Gi   # openldap PVC size.
     redisVolumSize: 2Gi # Redis PVC size.
-    monitoring:
-      endpoint: http://prometheus-operated.kubesphere-monitoring-system.svc:9090 # Prometheus endpoint to get metrics data
     es:   # Storage backend for logging, events and auditing.
       # elasticsearchMasterReplicas: 1   # total number of master nodes, it's not allowed to use even number
       # elasticsearchDataReplicas: 1     # total number of data nodes.
@@ -404,11 +364,8 @@ spec:
   console:
     enableMultiLogin: true  # enable/disable multiple sing on, it allows an account can be used by different users at the same time.
     port: 30880
-  alerting:                # (CPU: 0.1 Core, Memory: 100 MiB) Whether to install KubeSphere alerting system. It enables Users to customize alerting policies to send messages to receivers in time with different time intervals and alerting levels to choose from.
+  alerting:                # (CPU: 0.3 Core, Memory: 300 MiB) Whether to install KubeSphere alerting system. It enables Users to customize alerting policies to send messages to receivers in time with different time intervals and alerting levels to choose from.
     enabled: false
-    # thanosruler:
-    #   replicas: 1
-    #   resources: {}
   auditing:                # Whether to install KubeSphere audit log system. It provides a security-relevant chronological set of records，recording the sequence of activities happened in platform, initiated by different tenants.
     enabled: false
   devops:                  # (CPU: 0.47 Core, Memory: 8.6 G) Whether to install KubeSphere DevOps System. It provides out-of-box CI/CD system based on Jenkins, and automated workflow tools including Source-to-Image & Binary-to-Image.
@@ -426,13 +383,10 @@ spec:
       replicas: 2
   logging:                 # (CPU: 57 m, Memory: 2.76 G) Whether to install KubeSphere logging system. Flexible logging functions are provided for log query, collection and management in a unified console. Additional log collectors can be added, such as Elasticsearch, Kafka and Fluentd.
     enabled: false
-    logsidecar:
-      enabled: true
-      replicas: 2
+    logsidecarReplicas: 2
   metrics_server:                    # (CPU: 56 m, Memory: 44.35 MiB) Whether to install metrics-server. IT enables HPA (Horizontal Pod Autoscaler).
     enabled: false
   monitoring:
-    storageClass: ""                 # If there is a independent StorageClass your need for prometheus, you can specify it here. default StorageClass used by default.
     # prometheusReplicas: 1            # Prometheus replicas are responsible for monitoring different segments of data source and provide high availability as well.
     prometheusMemoryRequest: 400Mi   # Prometheus request memory.
     prometheusVolumeSize: 20Gi       # Prometheus PVC size.
@@ -442,66 +396,14 @@ spec:
   networkpolicy:       # Network policies allow network isolation within the same cluster, which means firewalls can be set up between certain instances (Pods).
     # Make sure that the CNI network plugin used by the cluster supports NetworkPolicy. There are a number of CNI network plugins that support NetworkPolicy, including Calico, Cilium, Kube-router, Romana and Weave Net.
     enabled: false
-  network:
-    enabled: false
-    ippool: # kubevirt uses "local", if calico cni is integrated then use the value "calico", "none" means that the ippool function is disabled
-      type: none
-    topology: # "weave-scope" means to use "weave-scope" to provide network topology information, "none" means that the ippool function is disabled
-      type: none
   notification:        # Email Notification support for the legacy alerting system, should be enabled/disabled together with the above alerting option.
     enabled: false
   openpitrix:          # (2 Core, 3.6 G) Whether to install KubeSphere Application Store. It provides an application store for Helm-based applications, and offer application lifecycle management.
     enabled: false
   servicemesh:         # (0.3 Core, 300 MiB) Whether to install KubeSphere Service Mesh (Istio-based). It provides fine-grained traffic management, observability and tracing, and offer visualization for traffic topology.
-    enabled: false     # base component (pilot)
-  kubeedge:
     enabled: false
-    cloudCore:
-      nodeSelector: {"node-role.kubernetes.io/worker": ""}
-      tolerations: []
-      cloudhubPort: "10000"
-      cloudhubQuicPort: "10001"
-      cloudhubHttpsPort: "10002"
-      cloudstreamPort: "10003"
-      tunnelPort: "10004"
-      cloudHub:
-        advertiseAddress:
-          - ""
-        nodeLimit: "100"
-      service:
-        cloudhubNodePort: "30000"
-        cloudhubQuicNodePort: "30001"
-        cloudhubHttpsNodePort: "30002"
-        cloudstreamNodePort: "30003"
-        tunnelNodePort: "30004"
-    edgeWatcher:
-      nodeSelector: {"node-role.kubernetes.io/worker": ""}
-      tolerations: []
-      edgeWatcherAgent:
-        nodeSelector: {"node-role.kubernetes.io/worker": ""}
-        tolerations: []
 EOF
 
-cat >>/tmp/kubesphere-console.yaml<<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: ks-console
-    tier: frontend
-  name: ks-console
-  namespace: kubesphere-system
-spec:
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8000
-    nodePort: 30880
-  selector:
-    app: ks-console
-    tier: frontend
-  type: LoadBalancer
-EOF
 
 function deploy_kubesphere(){
   sudo kubectl apply -f /tmp/kubesphere-installer.yaml

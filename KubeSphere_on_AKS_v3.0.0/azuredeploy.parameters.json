@@ -8,9 +8,6 @@
       "dnsPrefix": {
         "value": "AKS-KubeSphere-dns"
       },
-      "osDiskSizeGB": {
-        "value": 100
-      },
       "kubernetesVersion": {
         "value": "1.18.14"
       },
@@ -18,13 +15,10 @@
         "value": "Standard_F8s_v2"
       },
       "MasterNodeCount": {
-        "value": 1
+        "value": 3
       },
       "WorkerNodeCount": {
-        "value": 1
-      },
-      "enablePrivateCluster": {
-        "value": true
+        "value": 3
       },
       "vmName": {
         "value": "KS-client"
@@ -39,7 +33,7 @@
         "value": "ABCabc123456"
       },
       "vmSize": {
-        "value": "Standard_D8s_v3"
+        "value": "Standard_D2_V3"
       }
     }
 }
